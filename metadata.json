@@ -1,0 +1,8 @@
+{
+  "name": "NutriVision AI",
+  "description": "A mobile-first, voice-driven calorie and macro estimation app using computer vision and Gemini.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}
