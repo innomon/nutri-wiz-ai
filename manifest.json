@@ -9,14 +9,9 @@
   "orientation": "portrait",
   "icons": [
     {
-      "src": "https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f34e.png",
-      "sizes": "192x192",
-      "type": "image/png"
-    },
-    {
-      "src": "https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/72x72/1f34e.png",
-      "sizes": "512x512",
-      "type": "image/png"
+      "src": "https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f34e.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
     }
   ]
 }
