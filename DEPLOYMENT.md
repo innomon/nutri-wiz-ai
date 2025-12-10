@@ -1,6 +1,6 @@
 # Deployment Guide for NutriVision AI
 
-This document provides detailed instructions for deploying NutriVision AI to three popular platforms: Google Cloud Run, Vercel, and GitHub Pages.
+This document provides detailed instructions for deploying NutriVision AI to four popular platforms: Google Cloud Run, Vercel, GitHub Pages, and Firebase Hosting.
 
 ---
 
@@ -189,3 +189,44 @@ If you prefer not to use Actions, you can use the `gh-pages` package.
     ```bash
     npm run deploy
     ```
+
+---
+
+## 4. Firebase Hosting
+
+Firebase Hosting provides fast and secure hosting for web apps.
+
+### Step 1: Install Firebase CLI
+If you haven't already, install the Firebase tools globally:
+
+```bash
+npm install -g firebase-tools
+```
+
+### Step 2: Login and Initialize
+1.  Log in to your Google account:
+    ```bash
+    firebase login
+    ```
+2.  Initialize the project in your root directory:
+    ```bash
+    firebase init hosting
+    ```
+3.  Follow the interactive prompts:
+    *   **Project:** Select "Use an existing project" (create one in Firebase Console if needed) or "Create a new project".
+    *   **Public directory:** Enter `dist` (this is where Vite builds the app).
+    *   **Configure as a single-page app (rewrite all urls to /index.html)?**: Enter `Yes`.
+    *   **Set up automatic builds and deploys with GitHub?**: Optional (Enter `No` for manual deployment).
+    *   **File overwrite warnings:** If it asks to overwrite `dist/index.html`, select `No` (or delete the `dist` folder before building).
+
+### Step 3: Build and Deploy
+1.  Build the project:
+    ```bash
+    npm run build
+    ```
+2.  Deploy to Firebase:
+    ```bash
+    firebase deploy
+    ```
+
+Your app will be live at `https://[YOUR-PROJECT-ID].web.app`.
