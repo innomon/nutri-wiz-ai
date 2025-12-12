@@ -6,9 +6,10 @@ interface NutriCardProps {
   data: NutritionalData;
   onDismiss?: () => void;
   onSave?: () => void;
+  onDisagree?: () => void; // Function to trigger correction flow
 }
 
-const NutriCard: React.FC<NutriCardProps> = ({ data, onDismiss, onSave }) => {
+const NutriCard: React.FC<NutriCardProps> = ({ data, onDismiss, onSave, onDisagree }) => {
   const chartData = [
     { name: 'Carbs', value: data.carbs, color: '#fbbf24' }, // Amber
     { name: 'Protein', value: data.protein, color: '#3b82f6' }, // Blue
@@ -85,22 +86,35 @@ const NutriCard: React.FC<NutriCardProps> = ({ data, onDismiss, onSave }) => {
 
       {/* Action Buttons for Preview Mode */}
       {onSave && onDismiss && (
-        <div className="flex gap-3 mt-5 pt-4 border-t border-slate-700/50">
-            <button 
-                onClick={onDismiss}
-                className="flex-1 py-3 px-4 bg-slate-700 hover:bg-slate-600 text-slate-300 rounded-xl font-semibold transition-colors text-sm"
-            >
-                Cancel
-            </button>
-            <button 
-                onClick={onSave}
-                className="flex-1 py-3 px-4 bg-green-500 hover:bg-green-400 text-slate-900 rounded-xl font-bold shadow-lg shadow-green-500/20 transition-all active:scale-95 text-sm flex items-center justify-center gap-2"
-            >
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clipRule="evenodd" />
-                </svg>
-                Save to History
-            </button>
+        <div className="mt-5 pt-4 border-t border-slate-700/50">
+            {/* Save / Cancel Row */}
+            <div className="flex gap-3">
+                <button 
+                    onClick={onDismiss}
+                    className="flex-1 py-3 px-4 bg-slate-700 hover:bg-slate-600 text-slate-300 rounded-xl font-semibold transition-colors text-sm"
+                >
+                    Cancel
+                </button>
+                <button 
+                    onClick={onSave}
+                    className="flex-1 py-3 px-4 bg-green-500 hover:bg-green-400 text-slate-900 rounded-xl font-bold shadow-lg shadow-green-500/20 transition-all active:scale-95 text-sm flex items-center justify-center gap-2"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clipRule="evenodd" />
+                    </svg>
+                    Save
+                </button>
+            </div>
+            
+            {/* Disagree Button - Only shown if onDisagree is passed */}
+            {onDisagree && (
+                 <button 
+                    onClick={onDisagree}
+                    className="w-full mt-3 py-2 text-xs text-red-400 hover:text-red-300 font-medium underline decoration-red-400/50 hover:decoration-red-300"
+                >
+                    Wrong Food? Fix Analysis
+                </button>
+            )}
         </div>
       )}
     </div>

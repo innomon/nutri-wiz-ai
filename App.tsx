@@ -52,6 +52,11 @@ const App: React.FC = () => {
   // Store pending analysis data + image before saving to history
   const [previewItem, setPreviewItem] = useState<{ data: NutritionalData, imageBase64: string } | null>(null);
   
+  // Correction State
+  const [showCorrectionInput, setShowCorrectionInput] = useState(false);
+  const [correctionText, setCorrectionText] = useState('');
+  const [hasCorrected, setHasCorrected] = useState(false); // Flag to prevent 2nd disagree button
+
   const [showHistory, setShowHistory] = useState(false);
   const [isChatFullscreen, setIsChatFullscreen] = useState(false);
   const [showKeyModal, setShowKeyModal] = useState(false);
@@ -129,6 +134,7 @@ const App: React.FC = () => {
     initAudio();
     setIsCameraActive(false); // Briefly hide camera focus
     setAppState(AppState.ANALYZING);
+    setHasCorrected(false); // Reset correction flag for new image
 
     try {
       // 1. Analyze Image (Do NOT add to history yet)
@@ -161,6 +167,37 @@ const App: React.FC = () => {
     } finally {
       setAppState(AppState.IDLE);
       setIsCameraActive(true); 
+    }
+  };
+
+  // Trigger Correction Flow
+  const handleDisagree = () => {
+    setCorrectionText('');
+    setShowCorrectionInput(true);
+  };
+
+  // Submit Correction
+  const handleSubmitCorrection = async () => {
+    if (!correctionText.trim() || !previewItem) return;
+    
+    setShowCorrectionInput(false);
+    setAppState(AppState.ANALYZING);
+    
+    try {
+      // Re-analyze with hint
+      const newData = await analyzeFoodImage(previewItem.imageBase64, correctionText);
+      
+      // Update Preview
+      setPreviewItem(prev => prev ? { ...prev, data: newData } : null);
+      setHasCorrected(true); // Prevent future disagree logic for this item
+
+      // Speak new summary
+      await speakText(newData.summary);
+    } catch (error) {
+      console.error("Correction failed", error);
+      await speakText("I'm sorry, I couldn't update the data. Please try again.");
+    } finally {
+      setAppState(AppState.IDLE);
     }
   };
 
@@ -323,11 +360,6 @@ const App: React.FC = () => {
     }
     // Swipe Down: Shrink Chat (if currently full)
     else if (diffY < -threshold && isChatFullscreen) {
-        // Only collapse if we are at the top of the list or close to it, 
-        // otherwise scrolling up content might trigger it. 
-        // For simplicity here, we assume if the user swipes down on the header/top area it works.
-        // Actually, let's just make it simple: forceful swipe down anywhere toggles it back for now,
-        // or relies on the header area.
         setIsChatFullscreen(false);
     }
     touchStartY.current = null;
@@ -346,7 +378,7 @@ const App: React.FC = () => {
           ${isChatFullscreen ? 'h-0 opacity-0' : 'flex-grow h-[45%] opacity-100'}
         `}
       >
-        <CameraView onCapture={handleImageCapture} isActive={isCameraActive && !isChatFullscreen && !showHistory && !showKeyModal} />
+        <CameraView onCapture={handleImageCapture} isActive={isCameraActive && !isChatFullscreen && !showHistory && !showKeyModal && !previewItem} />
         
         {/* Header Overlay */}
         <div className="absolute top-4 left-4 z-20">
@@ -506,13 +538,50 @@ const App: React.FC = () => {
       </div>
       
       {/* Global Nutrition Preview Modal Overlay */}
-      {previewItem && (
+      {previewItem && !showCorrectionInput && (
         <div className="absolute inset-0 z-50 flex items-center justify-center bg-slate-900/95 backdrop-blur-md p-6 animate-fade-in">
            <NutriCard 
                data={previewItem.data} 
                onSave={savePreview}
-               onDismiss={cancelPreview} 
+               onDismiss={cancelPreview}
+               // Pass disagree handler ONLY if we haven't corrected yet
+               onDisagree={!hasCorrected ? handleDisagree : undefined}
            />
+        </div>
+      )}
+
+      {/* Correction Input Modal */}
+      {showCorrectionInput && (
+        <div className="absolute inset-0 z-[60] flex items-center justify-center bg-black/80 backdrop-blur-sm p-6 animate-fade-in">
+             <div className="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-sm shadow-2xl p-6">
+                 <h3 className="text-lg font-bold text-white mb-2">Wrong Food?</h3>
+                 <p className="text-sm text-slate-400 mb-4">Tell me what this actually is, and I'll recalculate.</p>
+                 
+                 <input 
+                    type="text"
+                    autoFocus
+                    placeholder="e.g. Turkey Burger, not Beef"
+                    value={correctionText}
+                    onChange={(e) => setCorrectionText(e.target.value)}
+                    className="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-3 text-white placeholder-slate-600 focus:outline-none focus:border-green-500 mb-4"
+                 />
+                 
+                 <div className="flex gap-3">
+                     <button 
+                        onClick={() => setShowCorrectionInput(false)}
+                        className="flex-1 py-3 bg-slate-800 text-slate-300 rounded-xl font-medium"
+                     >
+                        Cancel
+                     </button>
+                     <button 
+                        onClick={handleSubmitCorrection}
+                        disabled={!correctionText.trim()}
+                        className="flex-1 py-3 bg-green-500 text-slate-900 rounded-xl font-bold disabled:opacity-50"
+                     >
+                        Recalculate
+                     </button>
+                 </div>
+             </div>
         </div>
       )}
 

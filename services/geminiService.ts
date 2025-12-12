@@ -14,12 +14,14 @@ const getGenAIClient = (): GoogleGenAI => {
 
 /**
  * Analyzes an image to extract nutritional information.
+ * @param base64Image The image data
+ * @param userHint Optional text if the user corrects the AI (e.g. "This is actually a burger")
  */
-export const analyzeFoodImage = async (base64Image: string): Promise<NutritionalData> => {
+export const analyzeFoodImage = async (base64Image: string, userHint?: string): Promise<NutritionalData> => {
   const ai = getGenAIClient();
   const modelId = "gemini-2.5-flash"; // Good balance of speed and reasoning
   
-  const prompt = `
+  let promptText = `
     Analyze this food image. 
     Use the hand in the image (if present) as a reference for portion size.
     Estimate the following values for the visible portion:
@@ -32,6 +34,22 @@ export const analyzeFoodImage = async (base64Image: string): Promise<Nutritional
     - A brief, friendly summary (max 2 sentences) describing the food and its health impact, spoken as if to a friend.
   `;
 
+  if (userHint) {
+    promptText = `
+      The user indicated that the previous analysis was incorrect. 
+      The user states that this food is: "${userHint}".
+      
+      Based on this new information, re-analyze the image and portion size strictly for "${userHint}".
+      Recalculate:
+      - Total Calories (kcal)
+      - Glycemic Index (GI)
+      - Glycemic Load (GL)
+      - Total Carbohydrates (g)
+      - Protein (g)
+      - Update the summary to reflect this specific food.
+    `;
+  }
+
   const response = await ai.models.generateContent({
     model: modelId,
     contents: {
@@ -42,7 +60,7 @@ export const analyzeFoodImage = async (base64Image: string): Promise<Nutritional
             data: base64Image
           }
         },
-        { text: prompt }
+        { text: promptText }
       ]
     },
     config: {
@@ -82,6 +100,7 @@ export const getChatResponse = async (history: string[], userMessage: string): P
     Your goal is to help the user eat healthy.
     If the user asks for a recipe, provide a creative idea based on low GI/GL principles if possible, or tailored to their request.
     Keep responses concise (under 100 words) so they can be easily spoken aloud.
+    All measurement units must be in metric units, like grams and ml.
   `;
 
   // Construct a simple history context
